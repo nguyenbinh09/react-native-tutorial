@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Button,
   StyleSheet,
   Text,
   TextInput,
@@ -8,114 +7,80 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import {Alert} from 'react-native';
+import {useState} from 'react';
+import Axios from 'axios';
 
-//Tạo user structure
-//Tạo list các môn học mà user học
+const Item = ({item}) => (
+  <View style={styles.card}>
+    <Text style={styles.text_in_card}>
+      Name:
+      <Text style={styles.text_normal}> {item.name}</Text>
+    </Text>
+    <Text style={styles.text_in_card}>
+      Country:
+      <Text style={styles.text_normal}> {item.country}</Text>
+    </Text>
+    <Text style={styles.text_in_card}>
+      Url:
+      <Text style={styles.text_normal}> {item.web_pages}</Text>
+    </Text>
+  </View>
+);
 
-class User {
-  constructor(username, password, subjects) {
-    this.username = username;
-    this.password = password;
-    this.subjects = subjects;
-  }
-}
-class Subject {
-  constructor(name, code) {
-    this.name = name;
-    this.code = code;
-  }
-}
 function MyComponent() {
-  const users = [
-    new User('admin1', '123456', [new Subject('Đồ án 1', 'SE121')]),
-    new User('admin2', '123456', [
-      new Subject('Đồ án 1', 'SE121'),
-      new Subject('Công nghệ Web và ứng dụng', 'SE347'),
-    ]),
-    new User('admin3', '123456', [
-      new Subject('Đồ án 1', 'SE121'),
-      new Subject('Công nghệ Web và ứng dụng', 'SE347'),
-      new Subject('Phân tích và thiết kế hệ thống', 'SE114'),
-    ]),
-    new User('admin4', '123456', [
-      new Subject('Đồ án 1', 'SE121'),
-      new Subject('Công nghệ Web và ứng dụng', 'SE347'),
-      new Subject('Phân tích và thiết kế hệ thống', 'SE114'),
-      new Subject('Nhập môn Công nghệ phần mềm', 'SE104'),
-    ]),
-    new User('admin5', '123456', [
-      new Subject('Đồ án 1', 'SE121'),
-      new Subject('Công nghệ Web và ứng dụng', 'SE347'),
-      new Subject('Phân tích và thiết kế hệ thống', 'SE114'),
-      new Subject('Nhập môn Công nghệ phần mềm', 'SE104'),
-      new Subject('Lập trình hướng đối tượng', 'IT002'),
-    ]),
-  ];
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [nav, setNav] = React.useState(false);
-  const [user, setUser] = React.useState({});
+  const [universities, setUniversities] = useState([]);
+  const [country, setCountry] = useState('');
+  const [searched, setSearched] = useState(false);
 
-  const checkLogin = () => {
-    const tmp = users.find(
-      user => user.username === username && user.password === password,
-    );
-    if (username !== '' && password !== '' && tmp !== undefined) {
-      setNav(true);
-      setUser(tmp);
+  const searchUniversities = async country => {
+    if (country === '') {
+      console.log(searched);
+      return;
     } else {
-      1;
-      Alert.alert('Login Failed');
+      try {
+        console.log(searched);
+        const response = await Axios.get(
+          `http://universities.hipolabs.com/search?country=${country}`,
+        );
+        setUniversities(response.data);
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
-  return nav === false ? (
-    <View style={styles.Container}>
-      <Text style={styles.Text}>Login</Text>
-      <View style={styles.containerInput}>
-        <Text style={styles.text2}>Username</Text>
-        <TextInput
-          placeholder="Username"
-          value={username}
-          onChangeText={text => setUsername(text)}
-          style={styles.TextInput}
-        />
-        <Text style={styles.text2}>Password</Text>
-        <TextInput
-          secureTextEntry={true}
-          value={password}
-          placeholder="Password"
-          onChangeText={text => setPassword(text)}
-          style={styles.TextInput}
-        />
-      </View>
-      <Button title="Login" color={'red'} onPress={checkLogin} />
-    </View>
-  ) : (
-    <View style={styles.Container}>
-      <Text style={styles.Text}>List of subjects</Text>
-      <View style={styles.header}>
-        <Text style={styles.heading1}>Code</Text>
-        <Text style={styles.heading2}>Session</Text>
-      </View>
 
-      <View>
-        {user.subjects.map((subject, index) => (
-          <View style={styles.row} key={index}>
-            <Text style={{...styles.cell, color: 'blue'}}>{subject.code}</Text>
-            <Text style={styles.cell}>{subject.name}</Text>
-          </View>
-        ))}
+  return (
+    <View style={styles.container}>
+      <View style={styles.header_container}>
+        <TextInput
+          placeholder="Search"
+          style={styles.search_bar}
+          onChangeText={value => {
+            setCountry(value);
+          }}
+        />
+        <TouchableOpacity
+          onPress={() => {
+            if (country === '') {
+              setSearched(false);
+            } else {
+              setSearched(true);
+            }
+            searchUniversities(country);
+          }}
+          style={styles.search_button}>
+          <Text>Search</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          setNav(false);
-        }}>
-        <Text style={{textAlign: 'center', color: 'white', fontSize: 20}}>
-          Back to Login
-        </Text>
-      </TouchableOpacity>
+      {searched ? (
+        <View style={styles.body_container}>
+          <FlatList
+            style={styles.list}
+            data={universities}
+            renderItem={({item}) => <Item item={item} />}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -123,149 +88,65 @@ function MyComponent() {
 export default MyComponent;
 
 const styles = StyleSheet.create({
-  Container: {
+  container: {
     width: '100%',
     height: '100%',
     backgroundColor: 'transparent',
     alignItems: 'center',
+    backgroundColor: 'lightgray',
   },
-  Text: {
-    color: 'black',
-    fontSize: 50,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 100,
-  },
-  containerInput: {
-    width: '70%',
-    backgroundColor: 'transparent',
-    alignItems: 'flex-start',
-    alignSelf: 'center',
-    marginTop: 50,
-  },
-  TextInput: {
+  header_container: {
     width: '100%',
+    height: 50,
+    alignItems: 'center',
+    marginTop: 20,
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  search_bar: {
+    width: '75%',
     height: 40,
-    margin: 12,
-    borderWidth: 1,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    paddingLeft: 20,
+    borderColor: 'black',
+  },
+  body_container: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+  },
+  list: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent',
+  },
+  card: {
+    width: '90%',
+    backgroundColor: 'white',
+    marginTop: 20,
+    borderRadius: 10,
+    justifyContent: 'space-around',
     padding: 10,
     alignSelf: 'center',
   },
-  text2: {
+  text_in_card: {
     fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'right',
+    color: 'black',
+    paddingTop: 5,
+    paddingBottom: 5,
   },
-  button: {
-    width: '70%',
+  text_normal: {
+    fontWeight: 'normal',
+  },
+  search_button: {
+    width: '15%',
     height: 40,
-    backgroundColor: 'blue',
+    backgroundColor: 'red',
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 50,
-    borderRadius: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    padding: 10,
-  },
-  heading1: {
-    flex: 1,
-    fontSize: 20,
-    color: 'black',
-    marginLeft: 10,
-  },
-  heading2: {
-    flex: 3,
-    fontSize: 20,
-    color: 'black',
-    textAlign: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    padding: 10,
-    width: '100%',
-    height: 'auto',
-  },
-  cell: {
-    flex: 1,
-    fontSize: 15,
-    color: 'black',
     marginLeft: 10,
   },
 });
-
-// function MyComponent() {
-//     const [weight, setWeight] = React.useState('');
-//     const [height, setHeight] = React.useState('');
-//     const [bmi, setBmi] = React.useState(0);
-//     const compute = () => {
-//         if(weight !== "" && height !== ""){
-//             const h = height / 100;
-//             const result = weight / (h * h);
-//             setBmi(result.toFixed(2));
-//         } else {
-//             setBmi(0);
-//         }
-
-//     }
-//     return (
-//         <View style={styles.Container}>
-//            <View style={styles.containerInput}>
-//                  <Text  style={styles.text2}>Weight (KG)</Text>
-//                  <TextInput name="weight" value={weight} onChangeText={text => setWeight(text)}  style={styles.TextInput}/>
-//                  <Text style={styles.text2}>Height (CM)</Text>
-//                  <TextInput name="height" value={height} onChangeText={text => setHeight(text)} style={styles.TextInput}/>
-//             </View>
-//             <Text style={styles.text2}>BMI: {bmi}</Text>
-//             <TouchableOpacity style={styles.button} onPress={compute}>
-//                 <Text style={styles.textButton}>Compute</Text>
-//             </TouchableOpacity>
-//         </View>
-//     );
-// }
-
-// export default MyComponent;
-
-// const styles = StyleSheet.create({
-//     Container: {
-//         width: '100%',
-//         height: '100%',
-//         backgroundColor: "transparent",
-//         alignItems: "center"},
-//     containerInput: {
-//         width: "70%",
-//         backgroundColor: "transparent",
-//         alignItems: "flex-start",
-//         alignSelf:"center",
-//         marginTop: 100,
-//         },
-//     TextInput: {
-//         width: "100%",
-//         height: 40,
-//         margin: 12,
-//         borderWidth: 1,
-//         padding: 10,
-//         alignSelf: "center",
-//         },
-//     text2: {
-//         paddingTop: 20,
-//         fontSize: 20,
-//         fontWeight: "bold",
-//         textAlign: "right",
-//         },
-//     button: {
-//         width: "50%",
-//         height: 50,
-//         backgroundColor: "blue",
-//         marginTop: 70,
-//         borderRadius: 10,
-//         justifyContent: "center",
-//     },
-//     textButton: {
-//         color: "white",
-//         fontSize: 20,
-//         fontWeight: "bold",
-//         textAlign: "center",
-//     }
-// });
